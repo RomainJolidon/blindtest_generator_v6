@@ -2,11 +2,111 @@
   position: absolute;
   inset: 0;
   z-index: 2147483647;
-  background: rgba(10, 10, 10, 0.96);
-  color: #fff;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: system-ui, sans-serif;
+  gap: 12px;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   pointer-events: none;
+  text-align: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ── LISTENING ── */
+#bt-overlay.bt-listening {
+  background: rgba(10, 10, 10, 0.96);
+  color: #fff;
+}
+
+.bt-track-counter {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.bt-countdown {
+  font-size: 52px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+}
+
+.bt-subtitle {
+  font-size: 14px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
+.bt-hint {
+  font-size: 11px;
+  color: #444;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* ── REVEAL ── */
+#bt-overlay.bt-reveal {
+  background: rgba(10, 40, 24, 0.97);
+  color: #fff;
+}
+
+.bt-answer-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #4ade80;
+}
+
+.bt-song-name {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.bt-source-title {
+  font-size: 15px;
+  color: #86efac;
+}
+
+.bt-divider {
+  width: 40px;
+  height: 2px;
+  background: #4ade80;
+  border-radius: 2px;
+  margin: 4px 0;
+}
+
+#bt-overlay.bt-reveal .bt-countdown {
+  font-size: 13px;
+  font-weight: 400;
+  color: #555;
+}
+
+/* ── END ── */
+#bt-overlay.bt-end {
+  background: rgba(10, 10, 10, 0.97);
+  color: #fff;
+}
+
+.bt-end-emoji {
+  font-size: 40px;
+}
+
+.bt-end-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.bt-end-subtitle {
+  font-size: 14px;
+  color: #888;
 }
