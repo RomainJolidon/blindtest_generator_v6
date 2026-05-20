@@ -2,17 +2,34 @@
   "manifest_version": 3,
   "name": "Blindtest V6 Proto",
   "version": "0.1.0",
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Blindtest V6"
+  },
+  "permissions": [
+    "tabs"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch*"],
-      "js": ["content/overlay.js"],
-      "css": ["content/overlay.css"]
+      "matches": [
+        "https://www.youtube.com/watch*"
+      ],
+      "js": [
+        "content/overlay.js"
+      ],
+      "css": [
+        "content/overlay.css"
+      ]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/overlay.css"],
-      "matches": ["https://www.youtube.com/*"]
+      "resources": [
+        "content/overlay.css"
+      ],
+      "matches": [
+        "https://www.youtube.com/*"
+      ]
     }
   ]
 }

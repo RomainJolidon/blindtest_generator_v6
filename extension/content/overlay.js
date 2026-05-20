@@ -1,4 +1,4 @@
-console.log('[BT] content script loaded');
+console.log("[BT] content script loaded");
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -14,14 +14,29 @@ const ANSWER_DURATION = 10; // seconds
 // Track 2: NMEGBpEXENA — "One Summer's Day" Spirited Away (low confidence)
 // Track 3: _dxNQIfGZss — Clair Obscur: Expedition 33 Main Theme (very low confidence)
 const PLAYLIST = [
-  { name: 'Coconut Mall',     source: 'Mario Kart Wii',              youtubeId: 'xSMC6F_xH9I', startAt: 0  },
-  { name: "One Summer's Day", source: 'Spirited Away',               youtubeId: 'NMEGBpEXENA', startAt: 10 },
-  { name: 'Main Theme',       source: 'Clair Obscur: Expedition 33', youtubeId: '_dxNQIfGZss', startAt: 8  },
+  {
+    name: "Coconut Mall",
+    source: "Mario Kart Wii",
+    youtubeId: "cscuCIzItZQ",
+    startAt: 0,
+  },
+  {
+    name: "One Summer's Day",
+    source: "Spirited Away",
+    youtubeId: "iOYAl37AScY",
+    startAt: 10,
+  },
+  {
+    name: "Monoco Theme",
+    source: "Clair Obscur: Expedition 33",
+    youtubeId: "TcEdif_2PNY",
+    startAt: 8,
+  },
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-const STATE = { LISTENING: 'LISTENING', REVEAL: 'REVEAL', END: 'END' };
+const STATE = { LISTENING: "LISTENING", REVEAL: "REVEAL", END: "END" };
 
 let currentIndex = 0;
 let currentState = STATE.LISTENING;
@@ -33,7 +48,10 @@ let isInitialised = false;
 function waitForElement(selector) {
   return new Promise((resolve, reject) => {
     const immediate = document.querySelector(selector);
-    if (immediate) { resolve(immediate); return; }
+    if (immediate) {
+      resolve(immediate);
+      return;
+    }
     const start = Date.now();
     const timer = setInterval(() => {
       const el = document.querySelector(selector);
@@ -51,38 +69,41 @@ function waitForElement(selector) {
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 function clearCountdown() {
-  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
 }
 
 // ── YouTube element hiding ────────────────────────────────────────────────────
 
-const HIDDEN_SELECTORS = ['#title', '#owner', 'ytd-watch-metadata'];
+const HIDDEN_SELECTORS = ["#title", "#owner", "ytd-watch-metadata"];
 
 function hideYouTubeMetadata() {
-  HIDDEN_SELECTORS.forEach(sel => {
+  HIDDEN_SELECTORS.forEach((sel) => {
     const el = document.querySelector(sel);
-    if (el) el.style.visibility = 'hidden';
+    if (el) el.style.visibility = "hidden";
   });
 }
 
 function showYouTubeMetadata() {
-  HIDDEN_SELECTORS.forEach(sel => {
+  HIDDEN_SELECTORS.forEach((sel) => {
     const el = document.querySelector(sel);
-    if (el) el.style.visibility = '';
+    if (el) el.style.visibility = "";
   });
 }
 
 // ── Overlay creation ──────────────────────────────────────────────────────────
 
 function getOrCreateOverlay() {
-  let overlay = document.getElementById('bt-overlay');
+  let overlay = document.getElementById("bt-overlay");
   if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'bt-overlay';
+    overlay = document.createElement("div");
+    overlay.id = "bt-overlay";
   }
   return overlay;
 }
@@ -90,7 +111,7 @@ function getOrCreateOverlay() {
 // ── Render functions ──────────────────────────────────────────────────────────
 
 function renderListening(overlay, track, trackIndex, secondsLeft) {
-  overlay.className = 'bt-listening';
+  overlay.className = "bt-listening";
   overlay.innerHTML = `
     <div class="bt-track-counter">Track ${trackIndex + 1} / ${PLAYLIST.length}</div>
     <div class="bt-countdown" id="bt-countdown">${formatTime(secondsLeft)}</div>
@@ -100,7 +121,7 @@ function renderListening(overlay, track, trackIndex, secondsLeft) {
 }
 
 function renderReveal(overlay, track, trackIndex, secondsLeft) {
-  overlay.className = 'bt-reveal';
+  overlay.className = "bt-reveal";
   overlay.innerHTML = `
     <div class="bt-answer-label">✓ Answer</div>
     <div class="bt-song-name">${track.name}</div>
@@ -111,7 +132,7 @@ function renderReveal(overlay, track, trackIndex, secondsLeft) {
 }
 
 function renderEnd(overlay) {
-  overlay.className = 'bt-end';
+  overlay.className = "bt-end";
   overlay.innerHTML = `
     <div class="bt-end-emoji">🎉</div>
     <div class="bt-end-title">Session complete</div>
@@ -132,7 +153,7 @@ function transitionToReveal(overlay) {
 
   countdownInterval = setInterval(() => {
     secondsLeft -= 1;
-    const el = document.getElementById('bt-countdown');
+    const el = document.getElementById("bt-countdown");
     if (el) el.textContent = `Next in ${formatTime(secondsLeft)}`;
     if (secondsLeft <= 0) transitionToRedirect(overlay);
   }, 1000);
@@ -167,7 +188,7 @@ function transitionToListening(overlay) {
 
   countdownInterval = setInterval(() => {
     secondsLeft -= 1;
-    const el = document.getElementById('bt-countdown');
+    const el = document.getElementById("bt-countdown");
     if (el) el.textContent = formatTime(secondsLeft);
     if (secondsLeft <= 0) transitionToReveal(overlay);
   }, 1000);
@@ -176,25 +197,29 @@ function transitionToListening(overlay) {
 // ── Video seeking ─────────────────────────────────────────────────────────────
 
 function seekVideo(startAt) {
-  waitForElement('video').then(videoEl => {
-    const doSeek = () => {
-      videoEl.currentTime = startAt;
-      videoEl.play().catch(e => console.warn('[BT] play() blocked:', e.message));
-      console.log(`[BT] seeked to ${startAt}s`);
-    };
-    if (videoEl.readyState >= 1) {
-      doSeek();
-    } else {
-      videoEl.addEventListener('loadedmetadata', doSeek, { once: true });
-    }
-  }).catch(e => console.error(e));
+  waitForElement("video")
+    .then((videoEl) => {
+      const doSeek = () => {
+        videoEl.currentTime = startAt;
+        videoEl
+          .play()
+          .catch((e) => console.warn("[BT] play() blocked:", e.message));
+        console.log(`[BT] seeked to ${startAt}s`);
+      };
+      if (videoEl.readyState >= 1) {
+        doSeek();
+      } else {
+        videoEl.addEventListener("loadedmetadata", doSeek, { once: true });
+      }
+    })
+    .catch((e) => console.error(e));
 }
 
 // ── Keyboard handler ──────────────────────────────────────────────────────────
 
 function onKeyDown(e) {
-  if (e.key === 'r' || e.key === 'R') {
-    const overlay = document.getElementById('bt-overlay');
+  if (e.key === "r" || e.key === "R") {
+    const overlay = document.getElementById("bt-overlay");
     if (overlay && currentState === STATE.LISTENING) {
       transitionToReveal(overlay);
     }
@@ -206,8 +231,8 @@ function onKeyDown(e) {
 async function init() {
   // Determine which track we're on based on current URL
   const urlParams = new URLSearchParams(window.location.search);
-  const videoId = urlParams.get('v');
-  const idx = PLAYLIST.findIndex(t => t.youtubeId === videoId);
+  const videoId = urlParams.get("v");
+  const idx = PLAYLIST.findIndex((t) => t.youtubeId === videoId);
 
   // Not a blindtest URL — do nothing
   if (idx === -1) return;
@@ -218,12 +243,14 @@ async function init() {
   isInitialised = true;
 
   try {
-    const player = await waitForElement('#movie_player');
+    const player = await waitForElement("#movie_player");
     const overlay = getOrCreateOverlay();
     player.appendChild(overlay);
-    document.addEventListener('keydown', onKeyDown); // browser deduplicates identical listeners
+    document.addEventListener("keydown", onKeyDown); // browser deduplicates identical listeners
     transitionToListening(overlay);
-    console.log(`[BT] initialised on track ${currentIndex + 1}/${PLAYLIST.length}`);
+    console.log(
+      `[BT] initialised on track ${currentIndex + 1}/${PLAYLIST.length}`,
+    );
   } catch (e) {
     isInitialised = false; // allow retry if player not found
     console.error(e);
@@ -232,8 +259,8 @@ async function init() {
 
 // ── SPA navigation ────────────────────────────────────────────────────────────
 
-document.addEventListener('yt-navigate-finish', () => {
-  console.log('[BT] yt-navigate-finish — re-initialising');
+document.addEventListener("yt-navigate-finish", () => {
+  console.log("[BT] yt-navigate-finish — re-initialising");
   isInitialised = false; // reset so next init() can proceed
   clearCountdown();
   showYouTubeMetadata();
