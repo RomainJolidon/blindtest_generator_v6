@@ -213,16 +213,19 @@ async function init() {
   if (idx === -1) return;
   currentIndex = idx;
 
+  // Claim the init slot synchronously before any await (prevents TOCTOU race)
+  if (isInitialised) return;
+  isInitialised = true;
+
   try {
     const player = await waitForElement('#movie_player');
-    if (isInitialised) return; // guard against concurrent double-init
-    isInitialised = true;
     const overlay = getOrCreateOverlay();
     player.appendChild(overlay);
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown); // browser deduplicates identical listeners
     transitionToListening(overlay);
     console.log(`[BT] initialised on track ${currentIndex + 1}/${PLAYLIST.length}`);
   } catch (e) {
+    isInitialised = false; // allow retry if player not found
     console.error(e);
   }
 }
