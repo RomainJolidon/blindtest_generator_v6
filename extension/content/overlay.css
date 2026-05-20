@@ -19,7 +19,7 @@
 
 /* ── LISTENING ── */
 #bt-overlay.bt-listening {
-  background: rgba(10, 10, 10, 0.96);
+  background: #0a0a0a;
   color: #fff;
 }
 
@@ -53,7 +53,7 @@
 
 /* ── REVEAL ── */
 #bt-overlay.bt-reveal {
-  background: rgba(10, 40, 24, 0.97);
+  background: rgba(10, 40, 24, 0.75);
   color: #fff;
 }
 
@@ -109,4 +109,11 @@
 .bt-end-subtitle {
   font-size: 14px;
   color: #888;
+}
+
+/* ── YouTube metadata hiding (active during LISTENING) ── */
+html.bt-active ytd-watch-metadata,
+html.bt-active #above-the-fold,
+html.bt-active #owner {
+  visibility: hidden !important;
 }

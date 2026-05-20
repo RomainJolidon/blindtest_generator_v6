@@ -81,20 +81,12 @@ function clearCountdown() {
 
 // ── YouTube element hiding ────────────────────────────────────────────────────
 
-const HIDDEN_SELECTORS = ["#title", "#owner", "ytd-watch-metadata"];
-
 function hideYouTubeMetadata() {
-  HIDDEN_SELECTORS.forEach((sel) => {
-    const el = document.querySelector(sel);
-    if (el) el.style.visibility = "hidden";
-  });
+  document.documentElement.classList.add('bt-active');
 }
 
 function showYouTubeMetadata() {
-  HIDDEN_SELECTORS.forEach((sel) => {
-    const el = document.querySelector(sel);
-    if (el) el.style.visibility = "";
-  });
+  document.documentElement.classList.remove('bt-active');
 }
 
 // ── Overlay creation ──────────────────────────────────────────────────────────
@@ -172,7 +164,7 @@ function transitionToRedirect(overlay) {
 
   currentIndex = nextIndex;
   const nextTrack = PLAYLIST[currentIndex];
-  window.location.href = `https://www.youtube.com/watch?v=${nextTrack.youtubeId}`;
+  window.location.href = `https://www.youtube.com/watch?v=${nextTrack.youtubeId}&t=${nextTrack.startAt}`;
 }
 
 function transitionToListening(overlay) {
