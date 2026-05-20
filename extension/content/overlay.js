@@ -26,6 +26,7 @@ const STATE = { LISTENING: 'LISTENING', REVEAL: 'REVEAL', END: 'END' };
 let currentIndex = 0;
 let currentState = STATE.LISTENING;
 let countdownInterval = null;
+let isInitialised = false;
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -207,10 +208,15 @@ async function init() {
   const urlParams = new URLSearchParams(window.location.search);
   const videoId = urlParams.get('v');
   const idx = PLAYLIST.findIndex(t => t.youtubeId === videoId);
-  if (idx !== -1) currentIndex = idx;
+
+  // Not a blindtest URL — do nothing
+  if (idx === -1) return;
+  currentIndex = idx;
 
   try {
     const player = await waitForElement('#movie_player');
+    if (isInitialised) return; // guard against concurrent double-init
+    isInitialised = true;
     const overlay = getOrCreateOverlay();
     player.appendChild(overlay);
     document.addEventListener('keydown', onKeyDown);
@@ -225,6 +231,7 @@ async function init() {
 
 document.addEventListener('yt-navigate-finish', () => {
   console.log('[BT] yt-navigate-finish — re-initialising');
+  isInitialised = false; // reset so next init() can proceed
   clearCountdown();
   showYouTubeMetadata();
   currentState = STATE.LISTENING;
