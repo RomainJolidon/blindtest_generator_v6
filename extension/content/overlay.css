@@ -117,3 +117,46 @@ html.bt-active #above-the-fold,
 html.bt-active #owner {
   visibility: hidden !important;
 }
+
+/* ── Prevent video flash before overlay is ready ── */
+html.bt-loading #movie_player,
+html.bt-loading video {
+  visibility: hidden !important;
+}
+
+/* ── End screen action buttons ── */
+.bt-end-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  pointer-events: auto;
+}
+
+.bt-btn-primary,
+.bt-btn-secondary {
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.bt-btn-primary {
+  background: #4ade80;
+  color: #0a0a0a;
+}
+
+.bt-btn-primary:hover {
+  background: #86efac;
+}
+
+.bt-btn-secondary {
+  background: #222;
+  color: #aaa;
+}
+
+.bt-btn-secondary:hover {
+  background: #333;
+  color: #fff;
+}

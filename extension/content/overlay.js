@@ -82,11 +82,24 @@ function clearCountdown() {
 // ── YouTube element hiding ────────────────────────────────────────────────────
 
 function hideYouTubeMetadata() {
-  document.documentElement.classList.add('bt-active');
+  document.documentElement.classList.add("bt-active");
 }
 
 function showYouTubeMetadata() {
-  document.documentElement.classList.remove('bt-active');
+  document.documentElement.classList.remove("bt-active");
+}
+
+// ── Full cleanup (stop session) ───────────────────────────────────────────────
+
+function cleanupBlindtest() {
+  clearCountdown();
+  showYouTubeMetadata();
+  document.documentElement.classList.remove("bt-loading");
+  const overlay = document.getElementById("bt-overlay");
+  if (overlay) overlay.remove();
+  isInitialised = false;
+  currentState = STATE.LISTENING;
+  currentIndex = 0;
 }
 
 // ── Overlay creation ──────────────────────────────────────────────────────────
@@ -124,12 +137,22 @@ function renderReveal(overlay, track, trackIndex, secondsLeft) {
 }
 
 function renderEnd(overlay) {
-  overlay.className = "bt-end";
+  overlay.className = 'bt-end';
   overlay.innerHTML = `
     <div class="bt-end-emoji">🎉</div>
     <div class="bt-end-title">Session complete</div>
     <div class="bt-end-subtitle">${PLAYLIST.length} tracks played</div>
+    <div class="bt-end-actions">
+      <button class="bt-btn-secondary" id="bt-btn-close">Close</button>
+      <button class="bt-btn-primary" id="bt-btn-restart">▶ Play Again</button>
+    </div>
   `;
+  // Buttons need pointer events despite overlay having none
+  overlay.querySelector('#bt-btn-close').addEventListener('click', () => cleanupBlindtest());
+  overlay.querySelector('#bt-btn-restart').addEventListener('click', () => {
+    cleanupBlindtest();
+    window.location.href = `https://www.youtube.com/watch?v=${PLAYLIST[0].youtubeId}&t=${PLAYLIST[0].startAt}`;
+  });
 }
 
 // ── State transitions ─────────────────────────────────────────────────────────
@@ -223,27 +246,32 @@ function onKeyDown(e) {
 async function init() {
   // Determine which track we're on based on current URL
   const urlParams = new URLSearchParams(window.location.search);
-  const videoId = urlParams.get("v");
+  const videoId = urlParams.get('v');
   const idx = PLAYLIST.findIndex((t) => t.youtubeId === videoId);
 
   // Not a blindtest URL — do nothing
   if (idx === -1) return;
   currentIndex = idx;
 
+  // Hide player immediately to prevent video flickering before overlay is ready
+  document.documentElement.classList.add('bt-loading');
+
   // Claim the init slot synchronously before any await (prevents TOCTOU race)
   if (isInitialised) return;
   isInitialised = true;
 
   try {
-    const player = await waitForElement("#movie_player");
+    const player = await waitForElement('#movie_player');
+    document.documentElement.classList.remove('bt-loading');
     const overlay = getOrCreateOverlay();
     player.appendChild(overlay);
-    document.addEventListener("keydown", onKeyDown); // browser deduplicates identical listeners
+    document.addEventListener('keydown', onKeyDown); // browser deduplicates identical listeners
     transitionToListening(overlay);
     console.log(
       `[BT] initialised on track ${currentIndex + 1}/${PLAYLIST.length}`,
     );
   } catch (e) {
+    document.documentElement.classList.remove('bt-loading');
     isInitialised = false; // allow retry if player not found
     console.error(e);
   }
@@ -251,13 +279,29 @@ async function init() {
 
 // ── SPA navigation ────────────────────────────────────────────────────────────
 
-document.addEventListener("yt-navigate-finish", () => {
-  console.log("[BT] yt-navigate-finish — re-initialising");
+document.addEventListener('yt-navigate-finish', () => {
+  console.log('[BT] yt-navigate-finish — re-initialising');
+  const urlParams = new URLSearchParams(window.location.search);
+  const videoId = urlParams.get('v');
+  const idx = PLAYLIST.findIndex((t) => t.youtubeId === videoId);
+
+  if (idx === -1) {
+    // Navigated away from blindtest — clean up everything
+    cleanupBlindtest();
+    return;
+  }
+
   isInitialised = false; // reset so next init() can proceed
   clearCountdown();
   showYouTubeMetadata();
   currentState = STATE.LISTENING;
   init();
+});
+
+// ── Extension message handler (from popup) ────────────────────────────────────
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === 'BT_STOP') cleanupBlindtest();
 });
 
 init();
