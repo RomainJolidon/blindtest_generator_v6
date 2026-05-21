@@ -4,16 +4,17 @@ console.log("[BT] content script loaded");
 
 const POLL_INTERVAL_MS = 50;
 const POLL_TIMEOUT_MS = 5000;
-const GUESS_DURATION = 30; // seconds
-const ANSWER_DURATION = 10; // seconds
 
-// ── Playlist ─────────────────────────────────────────────────────────────────
+// ── Default playlist (fallback when no session is active) ────────────────────
+
+const DEFAULT_GUESS_DURATION = 30; // seconds
+const DEFAULT_ANSWER_DURATION = 10; // seconds
 
 // YouTube IDs: best-effort from training knowledge — verify manually in Chrome.
 // Track 1: xSMC6F_xH9I — "Coconut Mall" MKWii OST (low confidence)
 // Track 2: NMEGBpEXENA — "One Summer's Day" Spirited Away (low confidence)
 // Track 3: _dxNQIfGZss — Clair Obscur: Expedition 33 Main Theme (very low confidence)
-const PLAYLIST = [
+const DEFAULT_PLAYLIST = [
   {
     name: "Coconut Mall",
     source: "Mario Kart Wii",
@@ -33,6 +34,56 @@ const PLAYLIST = [
     startAt: 8,
   },
 ];
+
+// ── Active session (set by loadSession, used throughout) ─────────────────────
+
+let PLAYLIST = DEFAULT_PLAYLIST;
+let GUESS_DURATION = DEFAULT_GUESS_DURATION;
+let ANSWER_DURATION = DEFAULT_ANSWER_DURATION;
+
+// ── Session loading ───────────────────────────────────────────────────────────
+
+function loadSession() {
+  // Check if the URL hash carries a new session payload
+  const hash = window.location.hash;
+  if (hash.startsWith('#blindtest=')) {
+    try {
+      const encoded = hash.slice('#blindtest='.length);
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const session = JSON.parse(json);
+      sessionStorage.setItem('bt_session', JSON.stringify(session));
+      // Remove the hash so it doesn't re-trigger on refresh
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      console.log('[BT] session loaded from URL hash, tracks:', session.tracks.length);
+    } catch (e) {
+      console.error('[BT] failed to decode session from hash:', e);
+    }
+  }
+
+  // Try to read session from storage
+  const stored = sessionStorage.getItem('bt_session');
+  if (!stored) return null;
+
+  try {
+    const session = JSON.parse(stored);
+    if (!Array.isArray(session.tracks) || session.tracks.length === 0) return null;
+    // Map website payload shape → internal shape (sourceTitle → source)
+    const tracks = session.tracks.map((t) => ({
+      name: t.name,
+      source: t.sourceTitle,
+      youtubeId: t.youtubeId,
+      startAt: t.startAt,
+    }));
+    return {
+      tracks,
+      guessDuration: typeof session.guessDuration === 'number' ? session.guessDuration : DEFAULT_GUESS_DURATION,
+      answerDuration: typeof session.answerDuration === 'number' ? session.answerDuration : DEFAULT_ANSWER_DURATION,
+    };
+  } catch (e) {
+    console.error('[BT] failed to parse stored session:', e);
+    return null;
+  }
+}
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -244,6 +295,18 @@ function onKeyDown(e) {
 // ── Main init ─────────────────────────────────────────────────────────────────
 
 async function init() {
+  // Load session from hash or sessionStorage, falling back to defaults
+  const session = loadSession();
+  if (session) {
+    PLAYLIST = session.tracks;
+    GUESS_DURATION = session.guessDuration;
+    ANSWER_DURATION = session.answerDuration;
+  } else {
+    PLAYLIST = DEFAULT_PLAYLIST;
+    GUESS_DURATION = DEFAULT_GUESS_DURATION;
+    ANSWER_DURATION = DEFAULT_ANSWER_DURATION;
+  }
+
   // Determine which track we're on based on current URL
   const urlParams = new URLSearchParams(window.location.search);
   const videoId = urlParams.get('v');
@@ -281,6 +344,19 @@ async function init() {
 
 document.addEventListener('yt-navigate-finish', () => {
   console.log('[BT] yt-navigate-finish — re-initialising');
+
+  // Reload session (hash may have changed on navigation)
+  const session = loadSession();
+  if (session) {
+    PLAYLIST = session.tracks;
+    GUESS_DURATION = session.guessDuration;
+    ANSWER_DURATION = session.answerDuration;
+  } else {
+    PLAYLIST = DEFAULT_PLAYLIST;
+    GUESS_DURATION = DEFAULT_GUESS_DURATION;
+    ANSWER_DURATION = DEFAULT_ANSWER_DURATION;
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const videoId = urlParams.get('v');
   const idx = PLAYLIST.findIndex((t) => t.youtubeId === videoId);
