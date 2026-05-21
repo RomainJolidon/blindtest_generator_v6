@@ -1,14 +1,13 @@
-import type { ReactNode } from 'react'
-import { useData } from './lib/data'
-import { useSettings } from './lib/settings'
-import { generatePlaylist, countAvailableSongs } from './lib/playlist'
-import { buildLaunchUrl } from './lib/session'
-import { SettingsPanel } from './components/settings/SettingsPanel'
-import { SummaryBar } from './components/SummaryBar'
-import { ExtensionBanner } from './components/ExtensionBanner'
+import type { ReactNode } from "react";
+import { ExtensionBanner } from "./components/ExtensionBanner";
+import { SettingsPanel } from "./components/settings/SettingsPanel";
+import { useData } from "./lib/data";
+import { countAvailableSongs, generatePlaylist } from "./lib/playlist";
+import { buildLaunchUrl } from "./lib/session";
+import { useSettings } from "./lib/settings";
 
 function App() {
-  const { data, loading, error } = useData()
+  const { data, loading, error } = useData();
   const {
     settings,
     setSelectedCategories,
@@ -17,30 +16,39 @@ function App() {
     setGuessDuration,
     setAnswerDuration,
     setAllowMultiplePerSource,
-  } = useSettings(data?.categories ?? [])
+  } = useSettings(data?.categories ?? []);
 
-  let content: ReactNode
-  let playlist = generatePlaylist(data ?? { categories: [] }, settings)
-  let availableCount = data ? countAvailableSongs(data, settings) : 0
+  const playlist = generatePlaylist(data ?? { categories: [] }, settings);
+  const availableCount = data ? countAvailableSongs(data, settings) : 0;
 
+  function handleLaunch() {
+    const url = buildLaunchUrl(playlist, settings);
+    if (url) window.open(url, "_blank");
+  }
+
+  let content: ReactNode;
   if (loading) {
-    content = <p className="text-[hsl(var(--muted-foreground))]">Loading data…</p>
+    content = (
+      <p className="text-[hsl(var(--muted-foreground))]">Loading data…</p>
+    );
   } else if (error) {
-    content = <p className="text-red-500">Failed to load data: {error}</p>
+    content = <p className="text-red-500">Failed to load data: {error}</p>;
   } else if (data) {
     content = (
       <SettingsPanel
         categories={data.categories}
         availableSongCount={availableCount}
         settings={settings}
+        playlist={playlist}
         onSetCategories={setSelectedCategories}
         onSetDifficulty={setDifficultyRange}
         onSetTrackCount={setTrackCount}
         onSetGuessDuration={setGuessDuration}
         onSetAnswerDuration={setAnswerDuration}
         onSetAllowMultiple={setAllowMultiplePerSource}
+        onLaunch={handleLaunch}
       />
-    )
+    );
   }
 
   return (
@@ -56,21 +64,12 @@ function App() {
           </span>
         </div>
       </header>
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8 flex flex-col gap-4">
         <ExtensionBanner />
         {content}
       </main>
-      <SummaryBar
-        playlist={playlist}
-        guessDuration={settings.guessDuration}
-        answerDuration={settings.answerDuration}
-        onLaunch={() => {
-          const url = buildLaunchUrl(playlist, settings)
-          if (url) window.open(url, '_blank')
-        }}
-      />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
