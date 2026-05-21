@@ -1,47 +1,46 @@
-import { useState, useEffect } from 'react'
-import type { BlindtestData, FlatSong } from '../types/schema'
+import { useEffect, useState } from "react";
+import type { BlindtestData, FlatSong } from "../types/schema";
 
-const GITHUB_DATA_URL =
-  'https://raw.githubusercontent.com/RomainJolidon/blindtest_generator_v6/master/assets/data.json'
+const DATA_URL = `${import.meta.env.BASE_URL}data.json`;
 
 interface UseDataResult {
-  data: BlindtestData | null
-  loading: boolean
-  error: string | null
+  data: BlindtestData | null;
+  loading: boolean;
+  error: string | null;
 }
 
 export function useData(): UseDataResult {
-  const [data, setData] = useState<BlindtestData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<BlindtestData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
-    fetch(GITHUB_DATA_URL)
+    fetch(DATA_URL)
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json() as Promise<BlindtestData>
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<BlindtestData>;
       })
       .then((json) => {
         if (!cancelled) {
-          setData(json)
-          setLoading(false)
+          setData(json);
+          setLoading(false);
         }
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unknown error')
-          setLoading(false)
+          setError(err instanceof Error ? err.message : "Unknown error");
+          setLoading(false);
         }
-      })
+      });
 
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
-  return { data, loading, error }
+  return { data, loading, error };
 }
 
 export function getAllSongs(data: BlindtestData): FlatSong[] {
@@ -56,7 +55,7 @@ export function getAllSongs(data: BlindtestData): FlatSong[] {
         sourceId: source.id,
         sourceTitle: source.title,
         categoryId: category.id,
-      }))
-    )
-  )
+      })),
+    ),
+  );
 }
